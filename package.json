@@ -1,9 +1,0 @@
-{
-  "name": "docling-wrapper",
-  "version": "1.0.0",
-  "description": "Wrapper for docling-js",
-  "private": true, 
-  "dependencies": {
-    "docling-js": "^0.0.1" 
-  }
-}
