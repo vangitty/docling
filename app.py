@@ -30,7 +30,7 @@ def convert_docling():
     try:
         # Beispiel: docling aufrufen, um Markdown zu erzeugen (-f für Format)
         # Passe die Argumente an deine Bedürfnisse an! Siehe docling Doku.
-        cmd = ["npx", "--package", "docling-js", "docling", "-f", "markdown_strict", tmp_file_path]   
+        cmd = ["docling", "-f", "markdown_strict", tmp_file_path]   
         app.logger.info(f"Executing command: {' '.join(cmd)}")
 
         process = subprocess.run(
