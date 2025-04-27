@@ -18,32 +18,39 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
-# === Setup Application Directory and User ===
+# === Setup Application Directory ===
 WORKDIR /app
-RUN useradd --create-home --shell /bin/bash appuser
-# USER wird erst später gewechselt
 
-# === Install Node.js Dependencies (LOKAL) ===
-# Kopiere package.json und ggf. package-lock.json
-COPY --chown=appuser:appuser package*.json ./ 
+# === Install Node.js Dependencies (LOKAL, als root) ===
+# Kopiere package.json zuerst
+COPY package*.json ./ 
 # Installiere Node.js Pakete lokal im WORKDIR (/app)
-# --omit=dev überspringt devDependencies
 RUN npm install --omit=dev 
-# Setze Rechte für node_modules, falls nötig (oft nicht erforderlich)
-# RUN chown -R appuser:appuser node_modules
+
+# === Setup User ===
+# Erstelle User erst NACH npm install
+RUN useradd --create-home --shell /bin/bash appuser
+# Korrigiere ggf. Besitzer von node_modules (optional, oft nicht nötig)
+# RUN chown -R appuser:appuser /app/node_modules
 
 # === Install Python Dependencies ===
-COPY --chown=appuser:appuser requirements.txt .
-USER appuser # JETZT zum User wechseln
+# Kopiere requirements.txt jetzt erst (gehört dann root, macht aber nichts)
+COPY requirements.txt .
+# Wechsle zum non-root user
+USER appuser 
+# Installiere Pakete als appuser ins Home-Verzeichnis
 RUN pip install --no-cache-dir --user -r requirements.txt
 
-# === Update PATH ===
+# === Update PATH (als appuser) ===
 # Füge Python User bin UND lokales node_modules/.bin zum PATH hinzu
 ENV PATH="/app/node_modules/.bin:/home/appuser/.local/bin:${PATH}"
 
 # === Copy Application Code ===
-COPY --chown=appuser:appuser app.py .
+# Kopiere app.py (gehört dann root, wird aber nur gelesen)
+# Um es appuser zu geben: COPY --chown=appuser:appuser app.py .
+COPY app.py . 
 
 # === Expose Port and Define Start Command ===
 EXPOSE 5000
+# CMD läuft als appuser
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
